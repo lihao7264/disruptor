@@ -22,31 +22,28 @@ import com.lmax.disruptor.util.Util;
 
 class LhsPadding
 {
+    // 左填充
     protected long p1, p2, p3, p4, p5, p6, p7;
 }
 
 class Value extends LhsPadding
 {
+    // Sequence值
     protected volatile long value;
 }
 
 class RhsPadding extends Value
 {
+    // 右填充
     protected long p9, p10, p11, p12, p13, p14, p15;
 }
 
-/**
- * <p>Concurrent sequence class used for tracking the progress of
- * the ring buffer and event processors.  Support a number
- * of concurrent operations including CAS and order writes.
- *
- * <p>Also attempts to be more efficient with regards to false
- * sharing by adding padding around the volatile field.
- */
 public class Sequence extends RhsPadding
 {
+    // value的初始值
     static final long INITIAL_VALUE = -1L;
     private static final Unsafe UNSAFE;
+    // value的偏移量
     private static final long VALUE_OFFSET;
 
     static
@@ -99,6 +96,7 @@ public class Sequence extends RhsPadding
      */
     public void set(final long value)
     {
+        // 有序写入value属性值
         UNSAFE.putOrderedLong(this, VALUE_OFFSET, value);
     }
 

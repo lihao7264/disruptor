@@ -80,15 +80,18 @@ public final class SleepingWaitStrategy implements WaitStrategy
 
         if (counter > 100)
         {
+            //自旋100次
             --counter;
         }
         else if (counter > 0)
         {
+            //让步100次
             --counter;
             Thread.yield();
         }
         else
         {
+            // 睡眠等待 100纳秒
             LockSupport.parkNanos(sleepTimeNs);
         }
 

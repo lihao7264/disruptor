@@ -31,7 +31,10 @@ import java.util.Arrays;
 public class EventHandlerGroup<T>
 {
     private final Disruptor<T> disruptor;
+
+    //EventHandlerGroup  设置 批处理程序 以使用环形缓冲区中的事件。
     private final ConsumerRepository<T> consumerRepository;
+    // 当前组的序号下标列表
     private final Sequence[] sequences;
 
     EventHandlerGroup(
@@ -150,6 +153,8 @@ public class EventHandlerGroup<T>
     {
         return disruptor.createEventProcessors(sequences, handlers);
     }
+
+    // 创建 BatchEventProcessor
 
     /**
      * <p>Set up custom event processors to handle events from the ring buffer. The Disruptor will

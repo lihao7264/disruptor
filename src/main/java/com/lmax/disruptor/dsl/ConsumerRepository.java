@@ -24,12 +24,27 @@ import java.util.*;
  *
  * @param <T> the type of the {@link EventHandler}
  */
-class ConsumerRepository<T> implements Iterable<ConsumerInfo>
-{
-    private final Map<EventHandler<?>, EventProcessorInfo<T>> eventProcessorInfoByEventHandler =
-        new IdentityHashMap<>();
-    private final Map<Sequence, ConsumerInfo> eventProcessorInfoBySequence =
-        new IdentityHashMap<>();
+
+/**
+ * 提供 ConsumerInfo 消费者信息 仓库 机制，将 EventHandler 与 EventProcessor 关联起来。
+ * 传递给Disruptor的每一个EventHandler最终都会关联到一个 EventProcessor。
+ */
+class ConsumerRepository<T> implements Iterable<ConsumerInfo> {
+    /**
+     * EventHandler 到 消费者处理器 信息的映射，用于信息查询
+     */
+    private final Map<EventHandler<?>, EventProcessorInfo<T>> eventProcessorInfoByEventHandler =   new IdentityHashMap<>();
+
+    /**
+     * Sequence 到消费者信息的映射  ，ConsumerInfo 和 Sequence  是 一对多 关系
+     * 一个 ConsumerInfo 消费者 可能有多个Sequence{@link WorkerPool}，
+     * 但是 一个Sequence只从属一个消费者。
+     */
+    private final Map<Sequence, ConsumerInfo> eventProcessorInfoBySequence =  new IdentityHashMap<>();
+
+    /**
+     * 消费者信息列表：业务处理器
+     */
     private final Collection<ConsumerInfo> consumerInfos = new ArrayList<>();
 
     public void add(
@@ -93,6 +108,8 @@ class ConsumerRepository<T> implements Iterable<ConsumerInfo>
 
     public void unMarkEventProcessorsAsEndOfChain(final Sequence... barrierEventProcessors)
     {
+        // 遍历每个消费者的sequence，其实就是将相应sequence对应的EventProcessorInfo实例的endOfChain标记为false
+        // 标记 Sequence 对应的 EventProcessorInfo实例不是消费者链的尾结点
         for (Sequence barrierEventProcessor : barrierEventProcessors)
         {
             getEventProcessorInfo(barrierEventProcessor).markAsUsedInBarrier();

@@ -38,7 +38,7 @@ public final class FixedSequenceGroup extends Sequence
 
     /**
      * Get the minimum sequence value for the group.
-     *
+     *  获取这个 Sequence序号组最小的值
      * @return the minimum sequence value for the group.
      */
     @Override

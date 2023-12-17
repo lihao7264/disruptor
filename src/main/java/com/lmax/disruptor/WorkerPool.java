@@ -29,8 +29,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class WorkerPool<T>
 {
     private final AtomicBoolean started = new AtomicBoolean(false);
+    // 协作者模式下，所有的消费者共用一个workSequence，通过CAS写workSequence
     private final Sequence workSequence = new Sequence(Sequencer.INITIAL_CURSOR_VALUE);
     private final RingBuffer<T> ringBuffer;
+
+    // 多线程消费者信息, 包含了多个 工作处理器， 多个 工作处理器 ，放在下面的数组中
     // WorkProcessors are created to wrap each of the provided WorkHandlers
     private final WorkProcessor<?>[] workProcessors;
 
@@ -130,13 +133,18 @@ public final class WorkerPool<T>
         {
             throw new IllegalStateException("WorkerPool has already been started and cannot be restarted until halted.");
         }
-
+        // 生产者生产前，先获取生产者的cursor， 赋值给消费者们共用 workSequence
+        // 后续workSequence在消费者 WorkProcessor的run方法会执行++操作
         final long cursor = ringBuffer.getCursor();
         workSequence.set(cursor);
 
         for (WorkProcessor<?> processor : workProcessors)
         {
+            // 同样，每个消费者线程启动前，给每个消费者的消费进度sequence赋值生产者的cursor初值
             processor.getSequence().set(cursor);
+            // 【注意】如果有10个消费者共同消费，然后只有一个消费者线程的话，
+            // 此时生产者生产一个数据后生产者就会被阻塞；因为有其他9个消费者的消费sequence处于0状态，
+            // 此时生产者不能超过最慢消费者sequence，所以生产者不得不阻塞。
             executor.execute(processor);
         }
 

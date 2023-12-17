@@ -27,12 +27,18 @@ import com.lmax.disruptor.util.Util;
  */
 public abstract class AbstractSequencer implements Sequencer
 {
+    /**
+     * 1级消费者生产者门禁集合 原子更新器
+     */
     private static final AtomicReferenceFieldUpdater<AbstractSequencer, Sequence[]> SEQUENCE_UPDATER =
         AtomicReferenceFieldUpdater.newUpdater(AbstractSequencer.class, Sequence[].class, "gatingSequences");
 
     protected final int bufferSize;
     protected final WaitStrategy waitStrategy;
+    // cursor：相当于 自己的 event id， 存储自己发布过的序号
     protected final Sequence cursor = new Sequence(Sequencer.INITIAL_CURSOR_VALUE);
+
+    //  1级消费者生产者门禁集合
     protected volatile Sequence[] gatingSequences = new Sequence[0];
 
     /**

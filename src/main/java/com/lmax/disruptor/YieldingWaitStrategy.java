@@ -29,12 +29,13 @@ public final class YieldingWaitStrategy implements WaitStrategy
 
     @Override
     public long waitFor(
-        final long sequence, Sequence cursor, final Sequence dependentSequence, final SequenceBarrier barrier)
-        throws AlertException, InterruptedException
+            final long sequence, Sequence cursor, final Sequence dependentSequence, final SequenceBarrier barrier)
+            throws AlertException, InterruptedException
     {
         long availableSequence;
         int counter = SPIN_TRIES;
-
+        // 如果消费者需要消费的下一个序号超过了生产者已生产数据的最大序号，
+        // 那么消费者需要等待，否则返回生产者已生产数据的最大序号给消费者消费即可
         while ((availableSequence = dependentSequence.get()) < sequence)
         {
             counter = applyWaitMethod(barrier, counter);
@@ -49,16 +50,18 @@ public final class YieldingWaitStrategy implements WaitStrategy
     }
 
     private int applyWaitMethod(final SequenceBarrier barrier, int counter)
-        throws AlertException
+            throws AlertException
     {
         barrier.checkAlert();
 
         if (0 == counter)
         {
+            //让步
             Thread.yield();
         }
         else
         {
+            //自旋
             --counter;
         }
 
